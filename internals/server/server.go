@@ -12,16 +12,32 @@ import (
 	"github.com/labstack/echo/v5/middleware"
 )
 
+// Server interface defines the contract for HTTP server implementations.
+// This follows the Interface Segregation and Dependency Inversion principles,
+// allowing consumers to depend on the abstraction (interface) rather than
+// the concrete implementation (echoServer).
 type Server interface {
 	Start() error
 }
 
+// echoServer is the concrete implementation of the Server interface using Echo framework.
+// It follows the Single Responsibility Principle by handling only server-related logic.
 type echoServer struct {
-	echo   *echo.Echo
-	config Config
-	log    *logger.ZapSugaredLogger
+	echo   *echo.Echo               // Echo engine instance
+	config Config                   // Server configuration
+	log    *logger.ZapSugaredLogger // Logger instance
 }
 
+// New creates a new Server instance with the provided options.
+// It applies functional options to customize the server configuration.
+// Environment variable PORT can be used to override the default port.
+//
+// Example usage:
+//
+//	srv := server.New(
+//		server.WithPort("3000"),
+//		server.WithGracefulTimeout(30 * time.Second),
+//	)
 func New(opts ...Option) Server {
 	_ = godotenv.Load()
 
@@ -47,6 +63,17 @@ func New(opts ...Option) Server {
 	}
 }
 
+// Start starts the HTTP server with graceful shutdown handling.
+// It listens for OS interrupt signals (SIGINT, SIGTERM) and gracefully shuts down
+// the server, allowing in-flight requests to complete within the configured timeout.
+//
+// The method:
+// 1. Registers signal handlers for graceful shutdown
+// 2. Starts the server with the configured port and graceful timeout
+// 3. Blocks until a shutdown signal is received
+// 4. Initiates graceful shutdown with the configured timeout
+//
+// Returns error if server fails to start (not on graceful shutdown).
 func (s *echoServer) Start() error {
 	s.log.Infow("starting server", "port", s.config.Port)
 
@@ -69,6 +96,8 @@ func (s *echoServer) Start() error {
 	return nil
 }
 
+// Start is a convenience function that creates a new server with default configuration
+// and starts it immediately. It uses the package-level default configuration.
 func Start() {
 	New().Start()
 }
