@@ -1,11 +1,4 @@
 // Package server provides HTTP server functionality with Echo framework.
-//
-// This package implements the SOLID principles:
-// - Single Responsibility: Configuration handled in separate file
-// - Open/Closed: Extend server behavior through Options without modifying core
-// - Liskov Substitution: Server interface allows different implementations
-// - Interface Segregation: Focused Server interface for minimal contract
-// - Dependency Inversion: Depend on Server abstraction, not concrete implementation
 package server
 
 import "time"

@@ -2,18 +2,21 @@ package logger
 
 import (
 	"os"
+	"sync"
 
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-// defaultLogger is the singleton logger instance used throughout the application.
-// It is initialized during package init() and provides a convenient global logging instance.
-var defaultLogger *zap.SugaredLogger
+// singleton struct holds the thread-safe singleton instance.
+type singleton struct {
+	logger *zap.SugaredLogger
+	once   sync.Once
+}
 
-// defaultConfig defines the default configuration values for the logger.
-// These values are used when no custom options are provided.
+var instance singleton
+
 var defaultConfig = Config{
 	LogPath:    "logs",
 	FilePrefix: "four-market",
@@ -21,30 +24,14 @@ var defaultConfig = Config{
 	EncodeJSON: true,
 }
 
-// init initializes the default logger when the package is first loaded.
-// This ensures logging is ready before any other code runs.
-// It follows the Single Responsibility Principle by handling only initialization.
-func init() {
-	defaultLogger = New()
+func (s *singleton) getInstance(opts ...Option) *zap.SugaredLogger {
+	s.once.Do(func() {
+		s.logger = newLogger(opts...)
+	})
+	return s.logger
 }
 
-// New creates and configures a new zap.SugaredLogger instance.
-// It applies the provided functional options to customize the logger configuration.
-// If no options are provided, default configuration values are used.
-// Environment variables (LOG_PATH, LOG_FILE_PREFIX) can override default values.
-//
-// The function follows the Dependency Inversion principle by returning an interface
-// (specifically *zap.SugaredLogger which implements Logger), allowing consumers
-// to depend on the abstraction rather than the concrete implementation.
-//
-// Example usage:
-//
-//	logger := logger.New(
-//		logger.WithLogPath("/var/log/myapp"),
-//		logger.WithFilePrefix("myapp"),
-//		logger.WithMinLevel(logger.DebugLevel),
-//	)
-func New(opts ...Option) *zap.SugaredLogger {
+func newLogger(opts ...Option) *zap.SugaredLogger {
 	cfg := defaultConfig
 	for _, opt := range opts {
 		opt(&cfg)
@@ -88,9 +75,6 @@ func New(opts ...Option) *zap.SugaredLogger {
 	return logger.Sugar()
 }
 
-// encoderConfig returns the default encoder configuration for structured logging.
-// It defines how log fields are encoded, including timestamp format, level encoding,
-// duration format, and caller information.
 func encoderConfig() zapcore.EncoderConfig {
 	return zapcore.EncoderConfig{
 		TimeKey:        "time",
@@ -107,16 +91,18 @@ func encoderConfig() zapcore.EncoderConfig {
 	}
 }
 
-// GetInstance returns the default logger singleton instance.
-// This provides convenient access to the pre-configured logger without
-// requiring manual initialization.
-func GetInstance() *zap.SugaredLogger {
-	return defaultLogger
+// GetInstance returns the singleton logger instance.
+// It uses sync.Once to ensure thread-safe lazy initialization.
+// Only the first call creates the logger; subsequent calls return the same instance.
+//
+// Options can be passed on the first call to configure the logger.
+// These options are ignored on subsequent calls.
+func GetInstance(opts ...Option) *zap.SugaredLogger {
+	return instance.getInstance(opts...)
 }
 
 // Sync flushes any buffered log entries.
 // It should be called during application shutdown to ensure all logs are written.
-// Returns an error if the sync operation fails.
 func Sync() error {
-	return defaultLogger.Sync()
+	return instance.logger.Sync()
 }
