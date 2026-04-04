@@ -1,4 +1,4 @@
-module github.com/AbiXnash/four-market
+module github.com/TheWebTek/four-market
 
 go 1.26.1
 

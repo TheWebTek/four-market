@@ -1,13 +1,12 @@
 package main
 
 import (
-	"github.com/AbiXnash/event-manager/internals/server"
-	logger "github.com/AbiXnash/event-manager/utils"
+	"github.com/TheWebTek/four-market/internals/server"
+	"github.com/TheWebTek/four-market/utils/logger"
 )
 
-var log = logger.GetInstance()
-
 func main() {
+	log := logger.GetInstance()
+	log.Info("Server Starting...")
 	server.Start()
-	log.Info("Server Started!")
 }
