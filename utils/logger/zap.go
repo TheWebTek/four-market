@@ -65,10 +65,28 @@ func newLogger(opts ...Option) *zap.SugaredLogger {
 		return zap.New(core, zap.AddCaller()).Sugar()
 	}
 
-	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(encoderConfig()),
-		writer,
-		cfg.MinLevel,
+	consoleEncoder := zapcore.NewConsoleEncoder(zapcore.EncoderConfig{
+		TimeKey:        "time",
+		LevelKey:       "level",
+		CallerKey:      "caller",
+		MessageKey:     "msg",
+		LineEnding:     "\n",
+		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
+		EncodeTime:     zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05"),
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+	})
+
+	core := zapcore.NewTee(
+		zapcore.NewCore(
+			zapcore.NewJSONEncoder(encoderConfig()),
+			writer,
+			cfg.MinLevel,
+		),
+		zapcore.NewCore(
+			consoleEncoder,
+			zapcore.AddSync(os.Stdout),
+			cfg.MinLevel,
+		),
 	)
 
 	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
