@@ -24,7 +24,7 @@ var defaultConfig = Config{
 	EncodeJSON: true,
 }
 
-func (s *singleton) getInstance(opts ...Option) *zap.SugaredLogger {
+func (s *singleton) getInstance(opts ...Option) Logger {
 	s.once.Do(func() {
 		s.logger = newLogger(opts...)
 	})
@@ -52,7 +52,7 @@ func newLogger(opts ...Option) *zap.SugaredLogger {
 	}
 
 	if err := os.MkdirAll(cfg.LogPath, 0o755); err != nil {
-		println("Failed to create log directory: " + err.Error())
+		fmt.Fprintf(os.Stderr, "Failed to create log directory: %v\n", err)
 	}
 
 	writer, err := newDailyFileWriter(cfg.LogPath, cfg.FilePrefix)
@@ -115,7 +115,7 @@ func encoderConfig() zapcore.EncoderConfig {
 //
 // Options can be passed on the first call to configure the logger.
 // These options are ignored on subsequent calls.
-func GetInstance(opts ...Option) *zap.SugaredLogger {
+func GetInstance(opts ...Option) Logger {
 	return instance.getInstance(opts...)
 }
 

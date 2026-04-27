@@ -65,11 +65,18 @@ func WithIdleTimeout(timeout time.Duration) Option {
 	}
 }
 
+// WithLogger sets a custom logger instance.
+// If not provided, the default singleton logger will be used.
+func WithLogger(log logger.Logger) Option {
+	return func(c *Config) {
+		c.Logger = log
+	}
+}
+
 // defaultConfig returns the default configuration values.
 // These values are used when no custom options are provided.
 func defaultConfig() Config {
 	return Config{
-		Port:            "8080",
 		GracefulTimeout: 10 * time.Second,
 		ReadTimeout:     30 * time.Second,
 		WriteTimeout:    30 * time.Second,

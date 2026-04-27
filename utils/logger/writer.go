@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -47,7 +48,7 @@ func (w *dailyFileWriter) Write(p []byte) (n int, err error) {
 	if w.file == nil || w.currentDate != currentDate {
 		if w.file != nil {
 			if closeErr := w.file.Close(); closeErr != nil {
-				println("Failed to close log file: " + closeErr.Error())
+				fmt.Fprintf(os.Stderr, "Failed to close log file: %v\n", closeErr)
 			}
 		}
 
@@ -56,7 +57,7 @@ func (w *dailyFileWriter) Write(p []byte) (n int, err error) {
 
 		file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
-			println("Failed to open log file: " + err.Error())
+			fmt.Fprintf(os.Stderr, "Failed to open log file: %v\n", err)
 			return 0, err
 		}
 		w.file = file

@@ -23,9 +23,9 @@ type Server interface {
 // echoServer is the concrete implementation of the Server interface using Echo framework.
 // It follows the Single Responsibility Principle by handling only server-related logic.
 type echoServer struct {
-	echo   *echo.Echo               // Echo engine instance
-	config Config                   // Server configuration
-	log    *logger.ZapSugaredLogger // Logger instance
+	echo   *echo.Echo        // Echo engine instance
+	config Config            // Server configuration
+	log    logger.Logger // Logger instance
 }
 
 // New creates a new Server instance with the provided options.
@@ -39,18 +39,21 @@ type echoServer struct {
 //		server.WithGracefulTimeout(30 * time.Second),
 //	)
 func New(opts ...Option) Server {
-	_ = godotenv.Load()
+	log := logger.GetInstance()
+	if err := godotenv.Load(); err != nil {
+		log.Warnw("failed to load .env file", "error", err)
+	}
 
 	cfg := defaultConfig()
+	cfg.Port = os.Getenv("PORT")
 	for _, opt := range opts {
 		opt(&cfg)
 	}
-
-	if cfg.Port == "" {
-		cfg.Port = os.Getenv("PORT")
-	}
 	if cfg.Port == "" {
 		cfg.Port = "8080"
+	}
+	if cfg.Logger == nil {
+		cfg.Logger = logger.GetInstance()
 	}
 
 	e := echo.New()
@@ -59,7 +62,7 @@ func New(opts ...Option) Server {
 	return &echoServer{
 		echo:   e,
 		config: cfg,
-		log:    logger.GetInstance(),
+		log:    cfg.Logger,
 	}
 }
 
