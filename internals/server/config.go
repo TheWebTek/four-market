@@ -1,7 +1,11 @@
 // Package server provides HTTP server functionality with Echo framework.
 package server
 
-import "time"
+import (
+	"time"
+
+	"github.com/TheWebTek/four-market/utils/logger"
+)
 
 // Config holds the configuration options for the HTTP server.
 // Following the Open/Closed principle, new configuration options can be added
@@ -12,6 +16,7 @@ type Config struct {
 	ReadTimeout     time.Duration // Maximum time to read the full request (including body)
 	WriteTimeout    time.Duration // Maximum time to write the response
 	IdleTimeout     time.Duration // Maximum time to wait for the next request when keep-alive is enabled
+	Logger          logger.Logger // Custom logger instance
 }
 
 // Option is a functional option pattern for configuring the server.
